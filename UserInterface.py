@@ -1,30 +1,28 @@
 from data_loader import Loader
-from chroma import Chroma
-from embeddings import embedding
-from llms import LLM
+from Database import ChromaDataBase
+from embeddings import embedder
+from LLM import LLM_Chain
+from langchain_chroma import Chroma
+from langchain_ollama import OllamaEmbeddings
 
-ChromaInstance = Chroma()
+ChromaInstance = ChromaDataBase()
 LoaderInstance = Loader(chroma_instance=ChromaInstance)
 
 # change it with your text file or pdf file path.
-example_path = "use-cases/local_llm_rag/example.txt"
+example_path = "./LocalDocs/MIL-STD-882E.pdf"
 
 LoaderInstance.load_document(example_path)
 
-# Use in True whether you wan't that the model uses less vram but you need a GPU.
-# Use in False whether you want to use it fully fp precision (will use more vram)
-quantized = True
 
-llm = LLM(default_model="timpal0l/mdeberta-v3-base-squad2", tasks=["question-answering"], initial_config={
-    "device_map":"auto"
-})
+llm = LLM_Chain()
+embeddings = OllamaEmbeddings(model="all-minilm") 
+db = Chroma(persist_directory="./chroma_db", embedding_function=embeddings)
+chain= llm.get_qa_chain(db)
+
 
 while True:
     user_query = input("- Prompt: ")
-    context = ChromaInstance.query(embedding(user_query), {})
-    
-    user_query_template = create_template(context, user_query)
+    query = {"input":user_query}
+    response = chain.invoke(query)
+    print("AI Response:", response)
   
-    completion = llm.task("question-answering", user_query_template)
-
-    print(completion)
