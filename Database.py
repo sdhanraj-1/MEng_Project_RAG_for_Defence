@@ -1,13 +1,13 @@
 # chroma.py
-from chromadb import Client, ClientAPI
+from chromadb import PersistentClient, ClientAPI
 
 class ChromaDataBase():
     """
       Chroma class to instantiate a vector db in memory.
     """
     def __init__(self, default_database: str = "default", first_collection_name: str = "test", top_k: int = 1):
-        self.api: ClientAPI = Client()
-        self.collection_pointer = self.api.create_collection(first_collection_name)
+        self.api: ClientAPI = PersistentClient("./Chromadb")
+        self.collection_pointer = self.api.get_or_create_collection(first_collection_name)
         self.top_k = top_k
     
     def new_collection(self ,name: str, **kwargs):

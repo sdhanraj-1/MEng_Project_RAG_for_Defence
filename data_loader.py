@@ -35,7 +35,7 @@ class Loader():
             data={
                     "embedding": self.embedder.embedding(chunk.page_content),
                     "content": chunk.page_content,
-                    "metadata": chunk.metadata,
+                    "metadata": chunk.metadata, 
                     "id": index
                 }
             documents.append(data)
