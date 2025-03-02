@@ -39,3 +39,40 @@ class retrieverPipeline():
 
     def pretty_print_docs(self,docs):
         print(f"\n{'-' * 100}\n".join([f"Document {i+1}:\n\n + {d.page_content}" for i,d in enumerate(docs)]))
+
+    def check_vectorstore(self):
+        # Get collection stats
+        collection = self.vectorstore._collection
+        print(f"Number of documents in store: {collection.count()}")
+        
+        # Get all documents (be careful with this if you have many documents)
+        docs = self.vectorstore.get()
+        if docs and docs['documents']:
+            print("\nFirst few documents:")
+            for i, doc in enumerate(docs['documents'][:3]):  # Show first 3 docs
+                print(f"\nDocument {i+1}:")
+                print(doc[:200] + "..." if len(doc) > 200 else doc)  # Show first 200 chars
+        else:
+            print("No documents found in the vector store")    
+
+if __name__ == "__main__":   
+    retriever = retrieverPipeline()
+
+    """     try:
+        docs = retriever.vectorstore.similarity_search("Software Safety")
+        if not docs:
+            print("No documents were retrieved")
+        else:
+            retriever.pretty_print_docs(docs)
+    except Exception as e:
+        print(f"An error occurred: {e}") """
+
+    try: 
+        pipeline = retriever.getPipeline()
+        docs = pipeline.invoke("Software Safety")
+        if not docs:
+            print("No documents were retrieved")
+        else:
+            retriever.pretty_print_docs(docs)
+    except Exception as e:
+        print(f"An error occurred: {e}")

@@ -23,7 +23,7 @@ class LLM_Chain():
         llm = OllamaLLM(model="llama3.2:1b", num_gpu = -1)
 
 
-        system_prompt = (
+        '''system_prompt = (
         "Use the given context to answer the question. "
         "If you don't know the answer, say you don't know. "
         "Use three sentence maximum and keep the answer concise. "
@@ -36,7 +36,13 @@ class LLM_Chain():
             ]
         )
         question_answer_chain = create_stuff_documents_chain(llm, prompt)
-        chain = create_retrieval_chain(self.retriever.getPipeline(), question_answer_chain)
+        chain = create_retrieval_chain(self.retriever.getPipeline(), question_answer_chain)'''
+
+        chain = RetrievalQA.from_chain_type(llm=llm,
+                                 chain_type="stuff",
+                                 retriever=self.retriever.getPipeline(),
+                                 return_source_documents=True)
+
         return chain
 
 

@@ -20,15 +20,16 @@ def create_database():
 
 #create_database()
 
-llm = LLM_Chain()
-embeddings = OllamaEmbeddings(model="all-minilm") 
-db = Chroma(persist_directory="./Chromadb", embedding_function=embeddings)
-chain= llm.get_qa_chain(db)
+if __name__ == "__main__":
+    llm = LLM_Chain()
+    embeddings = OllamaEmbeddings(model="all-minilm") 
+    db = Chroma(persist_directory="./Chromadb", embedding_function=embeddings)
+    chain= llm.get_qa_chain(db)
 
 
-while True:
-    user_query = input("- Prompt: ")
-    query = {"input":user_query}
-    response = chain.invoke(query)
-    print("AI Response:", response["answer"])
+    while True:
+        user_query = input("- Prompt: ")
+        #query = {"input":user_query}
+        response = chain.invoke(user_query)
+        print("AI Response:", response['result'], "/n Source Docs:", response['source_documents'])
   
