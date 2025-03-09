@@ -12,15 +12,26 @@ from langchain_ollama import OllamaEmbeddings
 
 class retrieverPipeline(): 
     def __init__(self): 
-        self.embedder = OllamaEmbeddings(model="all-minilm") 
-        self.vectorstore = Chroma(persist_directory="./Chromadb", embedding_function= self.embedder)
+        self.embedder = OllamaEmbeddings(
+            model="all-minilm", 
+            num_gpu=-1
+        )
+        self.vectorstore = Chroma(
+            persist_directory="./Chromadb",
+            embedding_function=self.embedder,
+            collection_name="test"
+        )
         self.redundant_filter = EmbeddingsRedundantFilter(embeddings= self.embedder)
         self.reordering = LongContextReorder()
         self.reranker = BgeRerank()
         
 
     def singularRetriever(self): 
-        singular_retriever = self.vectorstore.as_retriever(search_kwargs={"k":10})
+        # Add search parameters for more results
+        singular_retriever = self.vectorstore.as_retriever(
+            search_type="similarity",
+            search_kwargs={"k": 10}
+        )
         return singular_retriever
 
     def multipleSourceRetriever(self):
@@ -32,10 +43,14 @@ class retrieverPipeline():
 
     def getPipeline(self): 
         retriever = self.singularRetriever()
-        #pipeline_compressor = DocumentCompressorPipeline(transformers=[self.redundant_filter,self.reordering,self.reranker])
-        #compression_pipeline = ContextualCompressionRetriever(base_compressor=pipeline_compressor,
-        #                                               base_retriever=retriever)
-        return retriever
+        pipeline_compressor = DocumentCompressorPipeline(
+            transformers=[self.redundant_filter, self.reordering, self.reranker]
+        )
+        compression_pipeline = ContextualCompressionRetriever(
+            base_compressor=pipeline_compressor,
+            base_retriever=retriever
+        )
+        return compression_pipeline
 
     def pretty_print_docs(self,docs):
         print(f"\n{'-' * 100}\n".join([f"Document {i+1}:\n\n + {d.page_content}" for i,d in enumerate(docs)]))
@@ -57,22 +72,33 @@ class retrieverPipeline():
 
 if __name__ == "__main__":   
     retriever = retrieverPipeline()
-
-    """     try:
-        docs = retriever.vectorstore.similarity_search("Software Safety")
-        if not docs:
-            print("No documents were retrieved")
-        else:
+    
+    print("\n=== Checking Vector Store Contents ===")
+    retriever.check_vectorstore()
+    
+    print("\n=== Testing Direct Vector Store Search ===")
+    try:
+        # Test direct similarity search first
+        docs = retriever.vectorstore.similarity_search(
+            "Software Safety",
+            k=10
+        )
+        if docs:
+            print(f"\nFound {len(docs)} documents via direct search")
             retriever.pretty_print_docs(docs)
+        else:
+            print("No documents found via direct search")
     except Exception as e:
-        print(f"An error occurred: {e}") """
+        print(f"Direct search error: {e}")
 
+    print("\n=== Testing Retriever Pipeline ===")
     try: 
         pipeline = retriever.getPipeline()
         docs = pipeline.invoke("Software Safety")
-        if not docs:
-            print("No documents were retrieved")
-        else:
+        if docs:
+            print(f"\nFound {len(docs)} documents via pipeline")
             retriever.pretty_print_docs(docs)
+        else:
+            print("No documents found via pipeline")
     except Exception as e:
-        print(f"An error occurred: {e}")
+        print(f"Pipeline error: {e}")

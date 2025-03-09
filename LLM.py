@@ -2,7 +2,6 @@ from langchain_ollama import OllamaLLM
 from langchain.chains import create_retrieval_chain
 from langchain_core.prompts import ChatPromptTemplate
 from langchain.chains.combine_documents import create_stuff_documents_chain
-from langchain.chains import RetrievalQA
 
 from langchain_ollama import OllamaEmbeddings
 from langchain_chroma import Chroma
@@ -18,32 +17,33 @@ class LLM_Chain():
         self.retriever = retrieverPipeline()
 
     # text generation
-    def get_qa_chain(self,db):
+    def get_qa_chain(self):
         #retriever = db.as_retriever()
         llm = OllamaLLM(model="llama3.2:1b", num_gpu = -1)
 
+        # Create a more detailed prompt that explicitly uses the context
+        prompt = ChatPromptTemplate.from_messages([
+            ("system", """You are a helpful AI assistant. Use the following pieces of context to answer the user's question. 
+            If you don't know the answer or can't find it in the context, just say "I don't have enough information to answer that."
+            Always base your answer on the context provided, not on prior knowledge.
+            
+            Context: {context}"""),
+            ("human", "{input}")
+        ])
 
-        '''system_prompt = (
-        "Use the given context to answer the question. "
-        "If you don't know the answer, say you don't know. "
-        "Use three sentence maximum and keep the answer concise. "
-        "Context: {context}"
+        # Create the document chain
+        document_chain = create_stuff_documents_chain(
+            llm=llm,
+            prompt=prompt,
         )
-        prompt = ChatPromptTemplate.from_messages(
-            [
-                ("system", system_prompt),
-                ("human", "{input}"),
-            ]
+
+        # Create the retrieval chain
+        retrieval_chain = create_retrieval_chain(
+            retriever=self.retriever.getPipeline(),
+            combine_docs_chain=document_chain
         )
-        question_answer_chain = create_stuff_documents_chain(llm, prompt)
-        chain = create_retrieval_chain(self.retriever.getPipeline(), question_answer_chain)'''
 
-        chain = RetrievalQA.from_chain_type(llm=llm,
-                                 chain_type="stuff",
-                                 retriever=self.retriever.getPipeline(),
-                                 return_source_documents=True)
-
-        return chain
+        return retrieval_chain
 
 
 
@@ -54,4 +54,4 @@ if __name__ == "__main__":
     persist_directory = "./Chromadb"
     db = Chroma(persist_directory=persist_directory, embedding_function=embeddings)
 
-    qa_chain = Chain.get_qa_chain(db)
+    qa_chain = Chain.get_qa_chain()
