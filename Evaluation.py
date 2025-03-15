@@ -10,6 +10,7 @@ from langchain_ollama import OllamaEmbeddings
 
 import os
 import openai
+import pandas as pd
 from dotenv import load_dotenv
 api_key = os.environ.get("OPENAI_API_KEY")
 openai.api_key = api_key
@@ -20,30 +21,42 @@ class Evaluator():
     def __init__(self): 
         # create evaluation chains
         self.eval_result = []
-        self.test_questions  = [
-        "Which CEO is widely recognized for democratizing AI education through platforms like Coursera?",
-        "Who is Sam Altman?",
-        "Who is Demis Hassabis and how did he gained prominence?",
-        "Who is the CEO of Google and Alphabet Inc., praised for leading innovation across Google's product ecosystem?",
-        "How did Arvind Krishna transformed IBM?",
-        ]
-
-        self.test_groundtruths  = [
-            "Andrew Ng is the CEO of Landing AI and is widely recognized for democratizing AI education through platforms like Coursera.",
-            "Sam Altman is the CEO of OpenAI and has played a key role in advancing AI research and development. He strongly advocates for creating safe and beneficial AI technologies.",
-            "Demis Hassabis is the CEO of DeepMind and is celebrated for his innovative approach to artificial intelligence. He gained prominence for developing systems like AlphaGo that can master complex games.",
-            "Sundar Pichai is the CEO of Google and Alphabet Inc., praised for leading innovation across Google's vast product ecosystem. His leadership has significantly enhanced user experiences globally.",
-            "Arvind Krishna is the CEO of IBM and has transformed the company towards cloud computing and AI solutions. He focuses on delivering cutting-edge technologies to address modern business challenges.",
-        ]
-
-        self.examples = zip(self.test_questions, self.test_groundtruths)
-
+        self.test_questions = []
+        self.test_groundtruths = []
         self.llm = LLM_Chain()
         self.embeddings = OllamaEmbeddings(model="all-minilm") 
         self.db = Chroma(persist_directory="./Chromadb", embedding_function=self.embeddings)
-        self.chain= self.llm.get_qa_chain()
+        self.chain = self.llm.get_qa_chain()
         self.dataset = []
         self.evaluator_llm = LangchainLLMWrapper(ChatOpenAI(model="gpt-4o-mini"))
+        # Load questions and answers when initializing
+        self.examples = []
+        self.load_test_data()
+        
+    def load_test_data(self, file_path: str = "RAGAS Questions.xlsx"):
+        """
+        Loads test questions and ground truths from an Excel file.
+        
+        Args:
+            file_path (str): Path to the Excel file. Defaults to "RAGAS Questions.xlsx"
+        """
+        try:
+            # Read the Excel file
+            df = pd.read_excel(file_path)
+            
+            # Extract questions and answers from the DataFrame
+            self.test_questions = df['Questions'].tolist()
+            self.test_groundtruths = df['Answers'].tolist()
+            
+            print(f"Successfully loaded {len(self.test_questions)} questions and answers")
+            
+            # Update the examples zip
+            self.examples = zip(self.test_questions, self.test_groundtruths)
+            
+        except FileNotFoundError:
+            print(f"Error: Could not find the file {file_path}")
+        except Exception as e:
+            print(f"Error loading test data: {e}")
 
     def evaluate_chain(self): 
         for pair in self.examples:

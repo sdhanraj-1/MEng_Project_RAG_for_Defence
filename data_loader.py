@@ -1,4 +1,5 @@
 # data_loader.py
+import os
 from Database import ChromaDataBase
 from PreProcessing import preprocessor
 from langchain.schema import Document
@@ -51,14 +52,40 @@ class Loader():
         except Exception as e:
             print(f"Error adding to ChromaDB: {e}")
 
+    def load_all_documents(self, directory: str = "./LocalDocs"):
+        """
+        Loads all documents from the specified directory into the Chroma Database.
+        
+        Args:
+            directory (str): Path to the directory containing documents. Defaults to "./LocalDocs"
+        """
+        print(f"Loading all documents from: {directory}")
+        
+        if not os.path.exists(directory):
+            print(f"Directory {directory} does not exist")
+            return
+            
+        # Walk through the directory and process all files
+        for root, _, files in os.walk(directory):
+            for file in files:
+                file_path = os.path.join(root, file)
+                print(f"\nProcessing file: {file_path}")
+                self.load_document(file_path)
+                
+        print("\nFinished loading all documents")
+
 
 if __name__ == "__main__": 
     try:
         db = ChromaDataBase()
         DBLoader = Loader(db)
         
-        test_path = "./LocalDocs/MIL-STD-882E.pdf"
-        print(f"\nTesting with file: {test_path}")
+        # Test loading all documents
+        print("\n=== Testing Loading All Documents ===")
+        DBLoader.load_all_documents()
+        
+        """ test_path = "./LocalDocs/MIL-STD-882E.pdf"
+        print(f"\nTesting with single file: {test_path}")
         
         # First test chunking
         print("\n=== Testing Chunking ===")
@@ -69,7 +96,7 @@ if __name__ == "__main__":
         
         # Then test full loading
         print("\n=== Testing Full Loading ===")
-        DBLoader.load_document(path=test_path)
+        DBLoader.load_document(path=test_path) """
             
     except Exception as e:
         print(f"Main execution error: {e}")
