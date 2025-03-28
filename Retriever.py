@@ -80,8 +80,8 @@ if __name__ == "__main__":
     try:
         # Test direct similarity search first
         docs = retriever.vectorstore.similarity_search(
-            "Software Safety",
-            k=10
+            "What is software safety in the context of Mil-STD 882E?",
+            k=3
         )
         if docs:
             print(f"\nFound {len(docs)} documents via direct search")
