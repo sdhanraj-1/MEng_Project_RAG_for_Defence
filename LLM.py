@@ -1,6 +1,6 @@
 from langchain_ollama import OllamaLLM
 from langchain.chains import create_retrieval_chain
-from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.prompts import ChatPromptTemplate,FewShotChatMessagePromptTemplate
 from langchain.chains.combine_documents import create_stuff_documents_chain
 
 from langchain_ollama import OllamaEmbeddings
@@ -19,7 +19,7 @@ class LLM_Chain():
     # text generation
     def get_qa_chain(self):
         #retriever = db.as_retriever()
-        llm = OllamaLLM(model="llama3.2:1b", num_gpu = -1)
+        llm = OllamaLLM(model="llama3.2:3b", num_gpu = -1)
 
         # Create a more detailed prompt that explicitly uses the context
         prompt = ChatPromptTemplate.from_messages([

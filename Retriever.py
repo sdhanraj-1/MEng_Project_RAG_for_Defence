@@ -3,8 +3,9 @@ from langchain.retrievers.document_compressors import DocumentCompressorPipeline
 from langchain.retrievers import ContextualCompressionRetriever
 from langchain_community.document_transformers.long_context_reorder import LongContextReorder
 from langchain.retrievers.multi_query import MultiQueryRetriever
-from langchain.retrievers import EnsembleRetriever
-from langchain_community.retrievers import BM25Retriever
+#from langchain.retrievers import EnsembleRetriever
+#from langchain_community.retrievers import BM25Retriever
+from CustomRetriever import CompoundRetriever
 from langchain.retrievers import ContextualCompressionRetriever
 from Reranker import BgeRerank
 from langchain_chroma import Chroma
@@ -34,15 +35,13 @@ class retrieverPipeline():
         )
         return singular_retriever
 
-    def multipleSourceRetriever(self):
-        #vs_retriever = vectorstore.as_retriever(search_kwargs={"k":10})
-        #bm25_retriever = 
-        #ensemble_retriever = EnsembleRetriever(retrievers=[bm25_retriever,vs_retriever], weight=[0.5,0.5])
-        #return ensemble_retriever
-        pass
+    def CustomRetriever(self):
+        return CompoundRetriever(k=5)
 
     def getPipeline(self): 
-        retriever = self.singularRetriever()
+
+        #This changes with retriever
+        retriever = self.CustomRetriever()
         pipeline_compressor = DocumentCompressorPipeline(
             transformers=[self.redundant_filter, self.reordering, self.reranker]
         )
